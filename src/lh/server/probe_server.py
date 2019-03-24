@@ -84,12 +84,13 @@ class ProbeServer(ABC):
             server = readable_streams[0]
             try:
                 connection, address = server.accept()
+            except OSError:
+                continue
             except:
                 traceback.print_exc()
                 continue
 
             threading.Thread(target=self.handle_client, args=(connection, address)).start()
-
 
     def handle_client(self, client, address):
         is_udp = client.family == socket.SOCK_DGRAM
