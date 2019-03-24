@@ -107,21 +107,13 @@ class ProbeServer(ABC):
                 logging.info("[%s:%s] -> S(%d): %s %s", address[0], address[1], port, str(data), '(SSL)' if self.ssl else '')
 
                 matches = self.port_options[port]
-                match_idx = self.match_idx[port]
-                match_idx = min(match_idx, len(matches) - 1)
-                # match = self.rand.choice(matches)
-                match = matches[match_idx]
-                self.match_idx[port] = match_idx + 1
-
+                match = self.rand.choice(matches)
                 pattern = match.pattern
                 if isinstance(match, SoftMatch):
                     response = exrex.getone(pattern, limit=10e3)
                 else:
                     response = exrex.getone(pattern, limit=10e3)
 
-                # print('Received data on address {}'.format(address))
-                # print('[{}]: {}'.format(address, data))
-                # print(response)
                 response = response.encode('utf-8').decode()
                 if is_udp:
                     client.sendto(response.encode(), address)
