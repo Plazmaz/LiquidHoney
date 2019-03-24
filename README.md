@@ -7,14 +7,16 @@ A small, fluid, low-interaction honeypot designed to spoof banners across thousa
 * Hourly log rollover
 * Support for UDP and TCP based protocols
 * Works passively, can be used for recon/capturing in addition to being a honeypot
+* Does not require root after setup
 
-**Note**: 
-Due to the sheer number of low-numbered ports LiquidHoney spoofs, we suggest running as root. It is possible to run 
-without root access, but it will require changing the service probes file to operate on different ports, then forwarding each port manually.
+**Note**:   
+While LiquidHoney will attempt to register iptables rules redirecting ports to itself, you may need to do this manually if
+iptables is not present or is not usable. 
 
 ## Setup
 Setup is relatively simple. You will need Python 3 and pip installed to run this application.  
-1. `pip install -r requirements.txt`  
+1. `pip install -r requirements.txt`
 2. `./create-cert.sh` to generate an SSL certificate
-3. Run `sudo python3 honeypot_responder.py`
-4. Watch the logs roll in!
+3. Install the iptables rules using `sudo python3 liquid_honey.py ----create-rules`
+4. Run the server with `python3 liquid_honey.py`
+5. Watch the logs roll in!

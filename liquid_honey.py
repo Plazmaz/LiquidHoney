@@ -13,7 +13,8 @@ from src.lh.server.probe_server import ProbeServer
 @click.command()
 @click.option('--stdout', is_flag=True, help='Enables stdout logging')
 @click.option('--log-path', type=str, default='logs', help='Sets the directory to output logs to')
-def main(stdout, log_path):
+@click.option('--create-rules', default=False, is_flag=True, help='Attempt to create iptables rules (requires root!)')
+def main(stdout, log_path, create_rules):
     logging.basicConfig(format='[%(levelname)s] [%(asctime)s] %(message)s',
                         filename='liquid-honey.log',
                         level=logging.DEBUG)
@@ -31,9 +32,9 @@ def main(stdout, log_path):
     configs = list(ProbeFileParser('nmap-service-probes').iter_parse())
     configs = PortSelector(configs).config_iterator()
 
-    server = ProbeServer()
+    server = ProbeServer(create_rules)
     for port, config in configs:
-        server.add_from_config(port, config, 'localhost')
+        server.add_from_config(port, config)
     server.run()
 
 
