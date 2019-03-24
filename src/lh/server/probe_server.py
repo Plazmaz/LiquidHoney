@@ -16,7 +16,7 @@ CLAIMED_PORTS = []
 
 
 class ProbeServer(ABC):
-    MAX_PORTS_PER_SERVER = 20
+    MAX_PORTS_PER_SERVER = 100
     BUFFER_SIZE = 256
     socket_threads = []
     ssl_context = None
@@ -32,8 +32,8 @@ class ProbeServer(ABC):
 
     def add_from_config(self, port, config, hostname):
         self.ssl_context = SSLContext(PROTOCOL_TLS_SERVER)
-        self.ssl_context.load_cert_chain('cacert.pem', 'private.key')
         if config.has_directive('sslport'):
+            self.ssl_context.load_cert_chain('cacert.pem', 'private.key')
             ssl_ports = config.get_directives('sslport').ports
             ssl = port in ssl_ports
         else:
