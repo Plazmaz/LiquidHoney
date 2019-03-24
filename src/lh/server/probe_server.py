@@ -1,7 +1,14 @@
+import sys
 import struct
 import subprocess
 from shutil import which
-from ssl import SSLContext, PROTOCOL_TLS_SERVER
+
+from ssl import SSLContext
+if sys.version_info >= (3, 6):
+    from ssl import PROTOCOL_TLS
+else:
+    from ssl import PROTOCOL_TLSv1_2 as PROTOCOL_TLS
+
 import logging
 import select
 import socket
@@ -26,7 +33,7 @@ class ProbeServer(ABC):
     socket_threads = []
     ssl_context = None
 
-    def __init__(self, create_rules):
+    def __init__(self, listen_port, create_rules):
         self.sockets = []
         self.ports = []
         self.fingerprint_to_probes = {}
@@ -35,7 +42,8 @@ class ProbeServer(ABC):
         self.ssl = None
         self.rand = SystemRandom()
         self.create_rules = create_rules
-        self.add_server(11337, False, False, '0.0.0.0')
+        self.listen_port = listen_port
+        self.add_server(listen_port, False, False, '127.0.0.1')
 
     def _add_iptables_rule(self, is_udp, from_port, to_port):
         subprocess.run(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'udp' if is_udp else 'tcp',
@@ -43,7 +51,7 @@ class ProbeServer(ABC):
 
     def add_from_config(self, port, config):
         if config.has_directive('sslport') and not self.ssl_context:
-            self.ssl_context = SSLContext(PROTOCOL_TLS_SERVER)
+            self.ssl_context = SSLContext(PROTOCOL_TLS)
             self.ssl_context.load_cert_chain('cacert.pem', 'private.key')
             ssl_ports = config.get_directives('sslport').ports
             ssl = port in ssl_ports
@@ -55,11 +63,11 @@ class ProbeServer(ABC):
         is_udp = probe_directive.protocol == 'UDP'
         if self.create_rules:
             if which('iptables') is not None:
-                self._add_iptables_rule(is_udp, port, 11337)
+                self._add_iptables_rule(is_udp, port, self.listen_port)
             else:
                 logging.warning(
                     "Unable to automatically forward using iptables. You will need to manually configure your"
-                    " firewall to redirect ports to 11337")
+                    " firewall to redirect ports to {}".format(self.listen_port))
 
         matches = config.get_directives('match')
         if not matches:
