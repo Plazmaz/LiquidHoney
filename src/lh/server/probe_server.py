@@ -122,8 +122,6 @@ class ProbeServer(ABC):
 
                 dst = client.getsockopt(socket.SOL_IP, self.SO_ORIGINAL_DST, 16)
                 port, srv_ip = struct.unpack("!2xH4s8x", dst)
-                logging.info(client.getsockname())
-                logging.info(address)
                 logging.info("[%s:%s] -> S(%d): %s %s", address[0], address[1], port, str(data),
                              '(SSL)' if self.ssl else '')
 
