@@ -21,10 +21,11 @@ def main(stdout, log_path, listen_port, create_rules):
     logging.basicConfig(format='[%(levelname)s] [%(asctime)s] %(message)s',
                         filename='liquid-honey.log',
                         level=logging.DEBUG)
+    # Backups every 6 hrs, keeps up to 42 (7 days) worth of logs.
     rotator = TimedRotatingFileHandler(os.path.join(log_path, 'liquid-honey.log'),
                                        when="h",
-                                       interval=1,
-                                       backupCount=5)
+                                       interval=6,
+                                       backupCount=42)
 
     logging.getLogger().addHandler(rotator)
     if stdout:
@@ -44,7 +45,6 @@ def main(stdout, log_path, listen_port, create_rules):
 # This is an attempt to avoid restrictions imposed by the GPL license.
 # If maintainers of the nmap project feel this is non-compliant, please
 # reach out, and I will be happy to work with you.
-# This data is
 def download_nmap_version_db():
     if os.path.isfile('nmap-service-probes'):
         return

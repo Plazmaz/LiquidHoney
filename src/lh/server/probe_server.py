@@ -147,12 +147,11 @@ class ProbeServer(ABC):
                     # print(response.encode())
                 else:
                     client.send(response.encode())
-            except SocketException:
+            except (SocketException, ConnectionResetError, BrokenPipeError):
                 client.close()
                 return False
-
-            except Exception:
-                logging.info("Encountered unknown when handling data from %s.", address)
+            except Exception as e:
+                logging.info("Encountered unknown error when handling data from %s.", address)
+                logging.exception(e)
                 client.close()
-                traceback.print_exc()
                 return False
