@@ -14,9 +14,12 @@ While LiquidHoney will attempt to register iptables rules redirecting ports to i
 iptables is not present or is not usable. 
 
 ## Setup
-Setup is relatively simple. You will need Python 3 and pip installed to run this application.  
-1. `pip install -r requirements.txt`
-2. `./create-cert.sh` to generate an SSL certificate
-3. Install the iptables rules using `sudo python3 liquid_honey.py ----create-rules`
-4. Run the server with `python3 liquid_honey.py`
-5. Watch the logs roll in!
+Setup is relatively simple. You will need Python 3 and pip installed to run this application.
+1. Install nmap-service-probes. This file is under a different license (https://nmap.org/book/man-legal.html). Either of these options will work:
+    * Intall nmap  
+    * Download it here: https://raw.githubusercontent.com/nmap/nmap/master/nmap-service-probes.  
+2. `pip install -r requirements.txt`
+3. `./create-cert.sh` to generate an SSL certificate
+4. Install the iptables rules using `sudo python3 liquid_honey.py ----create-rules`
+5. Run the server with `python3 liquid_honey.py`
+6. Watch the logs roll in!

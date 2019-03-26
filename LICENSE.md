@@ -1,3 +1,9 @@
+#########################################################################################################
+# This software was built to work with files formatted using the map-service-probes File Format.        #
+# The Nmap services database is under a different license (https://nmap.org/book/man-legal.html)        #
+# Thanks!                                                                                               #
+#########################################################################################################
+
 MIT License
 
 Copyright (c) 2019 Dylan Katz

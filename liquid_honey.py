@@ -1,5 +1,8 @@
 import logging
 import os
+import shutil
+import sys
+
 import requests
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
@@ -31,7 +34,7 @@ def main(stdout, log_path, listen_port, create_rules):
     if stdout:
         logging.getLogger().addHandler(logging.StreamHandler())
 
-    download_nmap_version_db()
+    check_nmap_db()
 
     configs = list(ProbeFileParser('nmap-service-probes').iter_parse())
     configs = PortSelector(configs).config_iterator()
@@ -42,19 +45,19 @@ def main(stdout, log_path, listen_port, create_rules):
     server.run()
 
 
-# This is an attempt to avoid restrictions imposed by the GPL license.
-# If maintainers of the nmap project feel this is non-compliant, please
-# reach out, and I will be happy to work with you.
-def download_nmap_version_db():
+def check_nmap_db():
     if os.path.isfile('nmap-service-probes'):
         return
-    logging.info("'nmap-service-probes' not found. Downloading...")
-    response = requests.get('https://raw.githubusercontent.com/nmap/nmap/master/nmap-service-probes', stream=True)
-    response.raise_for_status()
-    with open('nmap-service-probes', 'wb') as file:
-        for data in response.iter_content(8192):
-            file.write(data)
 
+    if os.path.isfile('/usr/share/nmap/nmap-service-probes'):
+        shutil.copy('/usr/share/nmap/nmap-service-probes', 'nmap-service-probes')
+    elif os.path.isfile('/usr/local/share/nmap/nmap-service-probes'):
+        shutil.copy('/usr/local/share/nmap/nmap-service-probes', 'nmap-service-probes')
+
+    if not os.path.isfile('nmap-service-probes'):
+        print("'nmap-service-probes' not found. "
+              "Please download it or install nmap (see README)")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

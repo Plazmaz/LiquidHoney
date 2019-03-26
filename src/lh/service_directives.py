@@ -124,4 +124,4 @@ class Rarity(Directive):
 
     def __init__(self, raw):
         super().__init__('rarity', 1, raw)
-        self.rarity = self.parameters[0]
+        self.rarity = int(self.parameters[0])
