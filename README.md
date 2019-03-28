@@ -20,6 +20,6 @@ Setup is relatively simple. You will need Python 3 and pip installed to run this
     * Download it here: https://raw.githubusercontent.com/nmap/nmap/master/nmap-service-probes.  
 2. `pip install -r requirements.txt`
 3. `./create-cert.sh` to generate an SSL certificate
-4. Install the iptables rules using `sudo python3 liquid_honey.py ----create-rules`
+4. Install the iptables rules using `sudo python3 liquid_honey.py --create-rules`
 5. Run the server with `python3 liquid_honey.py`
 6. Watch the logs roll in!
