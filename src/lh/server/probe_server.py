@@ -28,7 +28,7 @@ CLAIMED_PORTS = []
 class ProbeServer(ABC):
     MAX_PORTS_PER_SERVER = 200
     BUFFER_SIZE = 256
-    IP_TRANSPARENT = 19
+    MAX_REPLIES = 10
     SO_ORIGINAL_DST = 80
     socket_threads = []
     ssl_context = None
@@ -118,6 +118,7 @@ class ProbeServer(ABC):
             threading.Thread(target=self.handle_client, args=(connection, address)).start()
 
     def handle_client(self, client, address):
+        client_reply_map = {}
         is_udp = client.family == socket.SOCK_DGRAM
         while True:
             try:
@@ -132,19 +133,25 @@ class ProbeServer(ABC):
                 port, srv_ip = struct.unpack("!2xH4s8x", dst)
                 logging.info("[%s:%s] -> S(%d): %s %s", address[0], address[1], port, str(data),
                              '(SSL)' if self.ssl else '')
+                
+                if port not in client_reply_map:
+                    client_reply_map[port] = 0
+                elif client_reply_map[port] >= MAX_REPLIES:
+                    log.info('Client exceeded chatter for port {}. Killing connection...'.format(port))
+                    break;
 
+                client_reply_map[port] += 1
                 matches = self.port_options[port]
                 match = self.rand.choice(matches)
                 pattern = match.pattern
                 if isinstance(match, SoftMatch):
-                    response = exrex.getone(pattern, limit=10e3)
+                    response = exrex.getone(pattern, limit=10000)
                 else:
-                    response = exrex.getone(pattern, limit=10e3)
+                    response = exrex.getone(pattern, limit=10000)
 
                 response = response.encode('utf-8').decode()
                 if is_udp:
                     client.sendto(response.encode(), address)
-                    # print(response.encode())
                 else:
                     client.send(response.encode())
             except (SocketException, ConnectionResetError, BrokenPipeError):
