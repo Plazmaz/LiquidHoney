@@ -136,7 +136,7 @@ class ProbeServer(ABC):
                 
                 if port not in client_reply_map:
                     client_reply_map[port] = 0
-                elif client_reply_map[port] >= MAX_REPLIES:
+                elif client_reply_map[port] >= self.MAX_REPLIES:
                     log.info('Client exceeded chatter for port {}. Killing connection...'.format(port))
                     break;
 
