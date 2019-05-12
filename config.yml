@@ -1,0 +1,35 @@
+## Logging configuration
+logging:
+  file_only: false
+  out_path: 'logs'
+  level: 'DEBUG'
+  # Number of hours each log file should last before rolling over.
+  rollover_after_hours: 6
+  # Number of log files to keep before deleting old ones.
+  # 0 = no limit
+  max_log_files: 0
+
+## Service spoofing configuration
+services:
+  # Path to nmap-service-probes.
+  probe_file_location: 'nmap-service-probes'
+
+  ############################################################################################################
+  ## Re-enabling honeypot services is not recommended and will increase detection rate from shodan/nmap/etc ##
+  ############################################################################################################
+  # List of service types to avoid spoofing.
+  # Defaults to 'honeypot' to reduce detection rates
+  # Items can be regular expressions and are case insensitive.
+  disabled_service_types: ['honeypot']
+
+  # List of product names to avoid spoofing.
+  # Defaults to patterns matching honeypots to reduce detection rates.
+  # Items can be regular expressions and are case insensitive.
+  disabled_product_names: ['.*honeypot.*', '.*honeyd.*', 'Dumbster fake smtpd', '.*nepenthes.*']
+
+## Networking-related items
+networking:
+  # Should be a port that does not have a service being spoofed on it, and is not being used currently.
+  real_port: 11337
+  max_ports_per_service: 10
+  max_replies: 10

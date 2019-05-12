@@ -76,6 +76,7 @@ class ProbeFileParser(object):
                 if isinstance(parsed_directive, Match):
                     self._complete_match(parsed_directive)
                 self.cur_probe.add_directive(parsed_directive)
+        yield self.cur_probe
 
     def start_probe(self):
         if self.cur_probe:

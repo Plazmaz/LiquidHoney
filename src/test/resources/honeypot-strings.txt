@@ -1,0 +1,14 @@
+Network Flight Recorder BackOfficer Friendly http honeypot
+Dionaea honeypothttpd
+Nepenthes honeypot netbios-ssn httpd
+Honeyd
+Kojoney SSH honeypot
+SSHTroll ssh honeypot
+Network Flight Recorder BackOfficer Friendly honeypot
+Network Flight Recorder BackOfficer Friendly telnet honeypot
+honeyd cmdexe.pl
+Nepenthes honeypot netbios-ssn
+Dionaea honeypot smbd
+Dionaea Honeypot httpd
+Dionaea Honeypot sipd
+Dionaea honeypot MS-SQL server
