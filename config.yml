@@ -31,5 +31,7 @@ services:
 networking:
   # Should be a port that does not have a service being spoofed on it, and is not being used currently.
   real_port: 11337
+  # The maximum number of ports per spoofed service
   max_ports_per_service: 10
+  # The maximum number of replies a spoofed service will make to a client
   max_replies: 10
