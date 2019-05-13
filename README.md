@@ -23,3 +23,6 @@ Setup is relatively simple. You will need Python 3 and pip installed to run this
 4. Install the iptables rules using `sudo python3 liquid_honey.py --create-rules`
 5. Run the server with `python3 liquid_honey.py`
 6. Watch the logs roll in!
+
+## Configuration
+LiquidHoney can be configured in more depth using the `config.yml` file. There are descriptions of the options in the default config.

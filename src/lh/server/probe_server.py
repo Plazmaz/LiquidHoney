@@ -1,19 +1,15 @@
 import sys
 import struct
 import subprocess
-from shutil import which
-
-from ssl import SSLContext
-if sys.version_info >= (3, 6):
-    from ssl import PROTOCOL_TLS
-else:
-    from ssl import PROTOCOL_TLSv1_2 as PROTOCOL_TLS
-
 import logging
 import select
 import socket
 import threading
 import traceback
+from shutil import which
+
+from ssl import SSLContext
+
 from abc import ABC
 from random import SystemRandom
 
@@ -22,18 +18,28 @@ import exrex
 from src.lh.server.exception import SocketException
 from src.lh.service_directives import SoftMatch
 
+if sys.version_info >= (3, 6):
+    from ssl import PROTOCOL_TLS
+else:
+    from ssl import PROTOCOL_TLSv1_2 as PROTOCOL_TLS
+
 CLAIMED_PORTS = []
 
 
-class ProbeServer(ABC):
-    MAX_PORTS_PER_SERVER = 200
-    BUFFER_SIZE = 256
-    IP_TRANSPARENT = 19
+class ProbeServer(object):
     SO_ORIGINAL_DST = 80
+
+    max_ports_per_service = 200
+    BUFFER_SIZE = 256
+    max_replies = 10
     socket_threads = []
     ssl_context = None
 
-    def __init__(self, listen_port, create_rules):
+    def __init__(self, listen_port, max_ports_per_service, max_replies, create_rules):
+        self.max_replies = max_replies
+        self.max_ports_per_service = max_ports_per_service
+        self.listen_port = listen_port
+
         self.sockets = []
         self.ports = []
         self.fingerprint_to_probes = {}
@@ -42,7 +48,6 @@ class ProbeServer(ABC):
         self.ssl = None
         self.rand = SystemRandom()
         self.create_rules = create_rules
-        self.listen_port = listen_port
         self.add_server(listen_port, False, False, '127.0.0.1')
 
     def _add_iptables_rule(self, is_udp, from_port, to_port):
@@ -103,7 +108,6 @@ class ProbeServer(ABC):
         self.socket_threads.append(server)
 
     def run(self):
-        # TODO: Multithread this
         while True:
             readable_streams, _, _ = select.select(self.socket_threads, [], [])
             server = readable_streams[0]
@@ -118,6 +122,7 @@ class ProbeServer(ABC):
             threading.Thread(target=self.handle_client, args=(connection, address)).start()
 
     def handle_client(self, client, address):
+        client_reply_map = {}
         is_udp = client.family == socket.SOCK_DGRAM
         while True:
             try:
@@ -133,21 +138,27 @@ class ProbeServer(ABC):
                 logging.info("[%s:%s] -> S(%d): %s %s", address[0], address[1], port, str(data),
                              '(SSL)' if self.ssl else '')
 
+                if port not in client_reply_map:
+                    client_reply_map[port] = 0
+                elif client_reply_map[port] >= self.max_replies:
+                    logging.info('Client exceeded chatter for port {}. Killing connection...'.format(port))
+                    break
+
+                client_reply_map[port] += 1
                 matches = self.port_options[port]
                 match = self.rand.choice(matches)
                 pattern = match.pattern
                 if isinstance(match, SoftMatch):
-                    response = exrex.getone(pattern, limit=10e3)
+                    response = exrex.getone(pattern, limit=1000)
                 else:
-                    response = exrex.getone(pattern, limit=10e3)
+                    response = exrex.getone(pattern, limit=1000)
 
                 response = response.encode('utf-8').decode()
                 if is_udp:
                     client.sendto(response.encode(), address)
-                    # print(response.encode())
                 else:
                     client.send(response.encode())
-            except (SocketException, ConnectionResetError, BrokenPipeError):
+            except (SocketException, ConnectionResetError, BrokenPipeError) as e:
                 client.close()
                 return False
             except Exception as e:

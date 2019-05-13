@@ -1,0 +1,3 @@
+Probe TCP GetRequest q|GET / HTTP/1.0\r\n\r\n|
+ports 22
+match test-service m|^some-data$| p/Test Service/

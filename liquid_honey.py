@@ -2,12 +2,11 @@ import logging
 import os
 import shutil
 import sys
-
-import requests
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 
 import click
 
+from src.lh.config import LHConfig
 from src.lh.parse_nmap_probes import ProbeFileParser
 from src.lh.port_selector import PortSelector
 from src.lh.server.probe_server import ProbeServer
@@ -19,10 +18,10 @@ from src.lh.server.probe_server import ProbeServer
 @click.option('--listen-port', type=int, default=11337, help='Set a port to forward traffic to. '
                                                              'This should be a service you aren\'t spoofing. '
                                                              '(Default 1137)')
-@click.option('--create-rules', default=False, is_flag=True, help='Attempt to create iptables rules (requires root!)')
+@click.option('--create-rules', default=False, required=False, is_flag=True, help='Attempt to create iptables rules (requires root!)')
 def main(stdout, log_path, listen_port, create_rules):
     logging.basicConfig(format='[%(levelname)s] [%(asctime)s] %(message)s',
-                        filename='liquid-honey.log',
+                        filename=os.path.join(log_path, 'liquid-honey.log'),
                         level=logging.DEBUG)
     # Backups every 6 hrs, keeps up to 42 (7 days) worth of logs.
     rotator = TimedRotatingFileHandler(os.path.join(log_path, 'liquid-honey.log'),
@@ -36,11 +35,13 @@ def main(stdout, log_path, listen_port, create_rules):
 
     check_nmap_db()
 
-    configs = list(ProbeFileParser('nmap-service-probes').iter_parse())
-    configs = PortSelector(configs).config_iterator()
+    conf = LHConfig('config.yml')
 
-    server = ProbeServer(listen_port, create_rules)
-    for port, config in configs:
+    probes = list(ProbeFileParser('nmap-service-probes').iter_parse())
+    probes = PortSelector(probes).config_iterator()
+
+    server = ProbeServer(listen_port or conf.listen_port, conf.max_ports_per_service, conf.max_replies, create_rules)
+    for port, config in probes:
         server.add_from_config(port, config)
     server.run()
 
