@@ -49,13 +49,6 @@ class ProbeServer(object):
         self.rand = SystemRandom()
         self.create_rules = create_rules
         self.add_server(listen_port, False, False, '127.0.0.1')
-        if self.create_rules:
-            if which('iptables') is not None:
-                # Kill traffic for this port.
-                subprocess.run(['iptables', '-A', 'INPUT', '-p', 'udp',
-                                '--dport', str(listen_port), '-j', 'DROP'])
-                subprocess.run(['iptables', '-A', 'INPUT', '-p', 'tcp',
-                                '--dport', str(listen_port), '-j', 'DROP'])
 
     def _add_iptables_rule(self, is_udp, from_port, to_port):
         subprocess.run(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'udp' if is_udp else 'tcp',
@@ -145,6 +138,11 @@ class ProbeServer(object):
 
                 dst = client.getsockopt(socket.SOL_IP, self.SO_ORIGINAL_DST, 16)
                 port, srv_ip = struct.unpack("!2xH4s8x", dst)
+                if port == 11337:
+                    logging.warning("Detected direct traffic to port 11337! Blocking!")
+                    client.close()
+                    return 
+
                 logging.info("[%s:%s] -> S(%d): %s %s", address[0], address[1], port, str(data),
                              '(SSL)' if self.ssl else '')
 
