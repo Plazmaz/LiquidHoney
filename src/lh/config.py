@@ -1,9 +1,5 @@
 import logging
 import re
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
 import yaml
 
 
@@ -15,7 +11,7 @@ class LHConfig(object):
 
     def __init__(self, filename='config.yml'):
         with open(filename) as f:
-            self.conf = yaml.load(f, loader=Loader)
+            self.conf = yaml.safe_load(f)
         self._parse_logging()
 
     def _parse_logging(self):
