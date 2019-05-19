@@ -12,9 +12,27 @@ class LHConfig(object):
     def __init__(self, filename='config.yml'):
         with open(filename) as f:
             self.conf = yaml.safe_load(f)
-        self._parse_logging()
+        # Logging variables
+        self.file_only = None
+        self.log_path = None
+        self.log_level = None
+        self.log_rollover = None
+        self.max_log_files = None
 
-    def _parse_logging(self):
+        # Services variables
+        self.service_probes_location = None
+        self.omit_service_patterns = None
+        self.omit_product_patterns = None
+
+        # Networking variables
+        self.listen_port = None
+        self.max_ports_per_service = None
+        self.max_replies = None
+
+        # Parse config yaml
+        self.parse_config()
+
+    def parse_config(self):
         # Logging
         log_conf = self.conf.get('logging', {})
         self.file_only = log_conf.get('file_only', False)

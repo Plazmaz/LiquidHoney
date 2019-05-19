@@ -30,14 +30,14 @@ def main(stdout, log_path, listen_port, create_rules):
                                        backupCount=42)
 
     logging.getLogger().addHandler(rotator)
-    if stdout:
-        logging.getLogger().addHandler(logging.StreamHandler())
 
     check_nmap_db()
 
     conf = LHConfig('config.yml')
+    if stdout or not conf.file_only:
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-    probes = list(ProbeFileParser('nmap-service-probes').iter_parse())
+    probes = list(ProbeFileParser(conf).iter_parse())
     probes = PortSelector(probes).config_iterator()
 
     server = ProbeServer(listen_port or conf.listen_port, conf.max_ports_per_service, conf.max_replies, create_rules)
