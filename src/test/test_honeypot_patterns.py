@@ -9,7 +9,6 @@ class TestConfigValues(object):
     def test_config_categories(self):
         assert self.conf.file_only == False
         assert self.conf.service_probes_location == 'nmap-service-probes'
-        assert self.conf.service_probes_location == 'nmap-service-probes'
         assert self.conf.listen_port == 11337
 
     def test_log_lvl(self):
