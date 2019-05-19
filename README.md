@@ -25,7 +25,7 @@ Setup is relatively simple. You will need Python 3 and pip installed to run this
 6. Watch the logs roll in!
 
 **Note:** By default, LiquidHoney drops packets sent to the listen port from non-internal addresses, however it is highly
-recommended that you block external traffic to that port (11337 by default)
+recommended that you block external traffic to that port (11337 by default).
 
 ## Configuration
 LiquidHoney can be configured in more depth using the `config.yml` file. There are descriptions of the options in the default config.
