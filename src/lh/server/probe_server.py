@@ -62,6 +62,9 @@ class ProbeServer(object):
                         '--dport', str(from_port), '-j', 'REDIRECT', '--to-port', str(to_port)])
 
     def add_from_config(self, port, config):
+        if port == self.listen_port:
+            logging.warning("Not adding listen port '%s' to list. Cannot spoof and forward to port simultaneously.")
+            return False
         if config.has_directive('sslport') and not self.ssl_context:
             self.ssl_context = SSLContext(PROTOCOL_TLS)
             self.ssl_context.load_cert_chain('cacert.pem', 'private.key')
