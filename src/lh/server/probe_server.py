@@ -163,16 +163,16 @@ class ProbeServer(object):
 
                 # Try with small/normal size, then try a larger pattern limit if we hit  a value error.
                 try:
-                    response = self.small_gen.xeger(pattern.pattern)
+                    response = self.small_gen.xeger(pattern)
                 except ValueError:
                     logging.warning(
                         'Unable to generate small response for repeat in regex "%s". Trying larger generator...',
-                        pattern.pattern)
+                        pattern)
                     try:
-                        response = self.large_gen.xeger(pattern.pattern)
+                        response = self.large_gen.xeger(pattern)
                     except ValueError:
                         logging.error('Unable to generate response for overly long repeat in regex "%s"',
-                                      pattern.pattern)
+                                      pattern)
                         response = ''
 
                 response = response.encode('utf-8').decode()
