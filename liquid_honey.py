@@ -47,25 +47,8 @@ def main(stdout, log_path, listen_port, create_rules):
 
     server = ProbeServer(listen_port, conf.max_ports_per_service, conf.max_replies, create_rules)
 
-    # for port, config in probes:
-    #     server.add_from_config(port, config)
-    # small_gen = Xeger(limit=80)
-    # large_gen = Xeger(limit=900)
-    #
-    # for port in server.port_options:
-    #     patterns = server.port_options[port][:10]
-    #     for pattern in patterns:
-    #         try:
-    #             response = small_gen.xeger(pattern.pattern)
-    #         except ValueError:
-    #             try:
-    #                 logging.warning(
-    #                     'Unable to generate small response for repeat in regex "%s". Trying larger generator...',
-    #                     pattern.pattern)
-    #                 response = large_gen.xeger(pattern.pattern)
-    #             except ValueError:
-    #                 logging.error('Unable to generate response for overly long repeat in regex "%s"', pattern.pattern)
-    #                 response = ""
+    for port, config in probes:
+        server.add_from_config(port, config)
 
     server.run()
 
