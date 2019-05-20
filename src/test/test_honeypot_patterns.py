@@ -1,6 +1,5 @@
 from src.lh.config import LHConfig
 
-
 class TestConfigValues(object):
     @classmethod
     def setup_class(cls):

@@ -14,6 +14,7 @@ from abc import ABC
 from random import SystemRandom
 
 import exrex
+from xeger import Xeger
 
 from src.lh.server.exception import SocketException
 from src.lh.service_directives import SoftMatch
@@ -49,6 +50,8 @@ class ProbeServer(object):
         self.rand = SystemRandom()
         self.create_rules = create_rules
         self.add_server(listen_port, False, False, '127.0.0.1')
+        self.small_gen = Xeger(limit=80)
+        self.large_gen = Xeger(limit=900)
 
     def _add_iptables_rule(self, is_udp, from_port, to_port):
         subprocess.run(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'udp' if is_udp else 'tcp',
@@ -157,10 +160,20 @@ class ProbeServer(object):
                 matches = self.port_options[port]
                 match = self.rand.choice(matches)
                 pattern = match.pattern
-                if isinstance(match, SoftMatch):
-                    response = exrex.getone(pattern, limit=1000)
-                else:
-                    response = exrex.getone(pattern, limit=1000)
+
+                # Try with small/normal size, then try a larger pattern limit if we hit  a value error.
+                try:
+                    response = self.small_gen.xeger(pattern.pattern)
+                except ValueError:
+                    logging.warning(
+                        'Unable to generate small response for repeat in regex "%s". Trying larger generator...',
+                        pattern.pattern)
+                    try:
+                        response = self.large_gen.xeger(pattern.pattern)
+                    except ValueError:
+                        logging.error('Unable to generate response for overly long repeat in regex "%s"',
+                                      pattern.pattern)
+                        response = ''
 
                 response = response.encode('utf-8').decode()
                 if is_udp:
