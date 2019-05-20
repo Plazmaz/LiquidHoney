@@ -1,6 +1,5 @@
 from src.lh.config import LHConfig
 
-
 class TestConfigValues(object):
     @classmethod
     def setup_class(cls):
@@ -8,7 +7,6 @@ class TestConfigValues(object):
 
     def test_config_categories(self):
         assert self.conf.file_only == False
-        assert self.conf.service_probes_location == 'nmap-service-probes'
         assert self.conf.service_probes_location == 'nmap-service-probes'
         assert self.conf.listen_port == 11337
 

@@ -20,8 +20,9 @@ class ProbeFileParser(object):
         'rarity': Rarity,
     }
 
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, conf):
+        self.conf = conf
+        self.filename = conf.service_probes_location
 
     @staticmethod
     def parse_ports(ports):
@@ -50,7 +51,6 @@ class ProbeFileParser(object):
         pattern_info = self.MATCH_FORMAT.search(pattern)
         match.pattern = pattern_info.group(2)
 
-
     def iter_parse(self):
         self.start_probe()
         with open(self.filename, encoding="utf8") as f:
@@ -75,6 +75,39 @@ class ProbeFileParser(object):
                 parsed_directive = self.DIRECTIVE_MAP[directive](line)
                 if isinstance(parsed_directive, Match):
                     self._complete_match(parsed_directive)
+
+                    blacklist_skip = False
+                    # Check service blacklist
+                    for pattern in self.conf.omit_service_patterns:
+                        if pattern.match(parsed_directive.service):
+                            logging.warning('Skipping line due to matching service blacklist item "%s". Line: "%s"',
+                                            pattern.pattern, line[:-1])
+                            blacklist_skip = True
+
+                            # Break inner loop
+                            break
+
+                        # Break outer loop
+                        if blacklist_skip:
+                            break
+
+                    # Check product blacklist
+                    for pattern in self.conf.omit_product_patterns:
+                        for product in parsed_directive.parameters:
+                            if pattern.match(product):
+                                logging.warning('Skipping line due to matching product blacklist item "%s". Line: "%s"',
+                                                pattern.pattern, line[:-1])
+                                blacklist_skip = True
+
+                                # Break inner loop
+                                break
+
+                            # Break outer loop
+                            if blacklist_skip:
+                                break
+                    # Skip this directive.
+                    if blacklist_skip:
+                        continue
                 self.cur_probe.add_directive(parsed_directive)
         yield self.cur_probe
 

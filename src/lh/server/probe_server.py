@@ -14,6 +14,7 @@ from abc import ABC
 from random import SystemRandom
 
 import exrex
+from xeger import Xeger
 
 from src.lh.server.exception import SocketException
 from src.lh.service_directives import SoftMatch
@@ -49,12 +50,17 @@ class ProbeServer(object):
         self.rand = SystemRandom()
         self.create_rules = create_rules
         self.add_server(listen_port, False, False, '127.0.0.1')
+        self.small_gen = Xeger(limit=80)
+        self.large_gen = Xeger(limit=900)
 
     def _add_iptables_rule(self, is_udp, from_port, to_port):
         subprocess.run(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'udp' if is_udp else 'tcp',
                         '--dport', str(from_port), '-j', 'REDIRECT', '--to-port', str(to_port)])
 
     def add_from_config(self, port, config):
+        if port == self.listen_port:
+            logging.warning("Not adding listen port '%s' to list. Cannot spoof and forward to port simultaneously.")
+            return False
         if config.has_directive('sslport') and not self.ssl_context:
             self.ssl_context = SSLContext(PROTOCOL_TLS)
             self.ssl_context.load_cert_chain('cacert.pem', 'private.key')
@@ -135,6 +141,12 @@ class ProbeServer(object):
 
                 dst = client.getsockopt(socket.SOL_IP, self.SO_ORIGINAL_DST, 16)
                 port, srv_ip = struct.unpack("!2xH4s8x", dst)
+                # Please block this port externally!
+                if port == 11337:
+                    client.close()
+                    logging.error("Detected direct traffic to port 11337 from ip '%s'! Blocked!", srv_ip)
+                    return
+
                 logging.info("[%s:%s] -> S(%d): %s %s", address[0], address[1], port, str(data),
                              '(SSL)' if self.ssl else '')
 
@@ -148,10 +160,20 @@ class ProbeServer(object):
                 matches = self.port_options[port]
                 match = self.rand.choice(matches)
                 pattern = match.pattern
-                if isinstance(match, SoftMatch):
-                    response = exrex.getone(pattern, limit=1000)
-                else:
-                    response = exrex.getone(pattern, limit=1000)
+
+                # Try with small/normal size, then try a larger pattern limit if we hit  a value error.
+                try:
+                    response = self.small_gen.xeger(pattern)
+                except ValueError:
+                    logging.warning(
+                        'Unable to generate small response for repeat in regex "%s". Trying larger generator...',
+                        pattern)
+                    try:
+                        response = self.large_gen.xeger(pattern)
+                    except ValueError:
+                        logging.error('Unable to generate response for overly long repeat in regex "%s"',
+                                      pattern)
+                        response = ''
 
                 response = response.encode('utf-8').decode()
                 if is_udp:
